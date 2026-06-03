@@ -1,5 +1,5 @@
 """
-AirInk v2 — Incorporating open-source best practices
+AirInk — Incorporating open-source best practices
 References:
   ★ KrShahil/Air-Drawing-System  → multi-finger gesture control for color/thickness/clear
   ★ SakshamShandilya/AirSketch   → adaptive smoothing + distance sampling de-jitter + alpha blending
