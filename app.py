@@ -1,22 +1,19 @@
 """
 AirInk — Incorporating open-source best practices
 References:
-  ★ KrShahil/Air-Drawing-System  → multi-finger gesture control for color/thickness/clear
-  ★ SakshamShandilya/AirSketch   → adaptive smoothing + distance sampling de-jitter + alpha blending
-  ★ IrfanKpm/OpenCv_Paint        → undo stack + pinch detection
-  ★ ryanw-2/MediaPipe-Hand-Detector → encapsulated HandDetector class for better reusability
-
-Install dependencies:
-    pip install opencv-python mediapipe numpy
+  KrShahil/Air-Drawing-System  → multi-finger gesture control for color/thickness/clear
+  SakshamShandilya/AirSketch   → adaptive smoothing + distance sampling de-jitter + alpha blending
+  IrfanKpm/OpenCv_Paint        → undo stack + pinch detection
+  ryanw-2/MediaPipe-Hand-Detector → encapsulated HandDetector class for better reusability
 
 Gesture controls:
-  ✦ Index finger only (others curled)        → Draw
-  ✦ Index + middle fingers                   → Move cursor (no drawing)
-  ✦ Index + middle + ring fingers            → Switch to next color
-  ✦ Index + pinky (middle/ring bent)         → Increase brush size
-  ✦ Index + ring (middle/pinky bent)         → Decrease brush size
-  ✦ All five fingers spread (open palm)      → Clear canvas
-  ✦ Thumb + index pinch                      → Undo
+  Index finger only (others curled)        → Draw
+  Index + middle fingers                   → Move cursor (no drawing)
+  Index + middle + ring fingers            → Switch to next color
+  Index + pinky (middle/ring bent)         → Increase brush size
+  Index + ring (middle/pinky bent)         → Decrease brush size
+  All five fingers spread (open palm)      → Clear canvas
+  Thumb + index pinch                      → Undo
 
 Keyboard shortcuts:
   c  clear | s  save | q  quit | z  undo | 1-5 colors | +/- thickness
@@ -30,7 +27,7 @@ from collections import deque
 
 # Display config
 DISPLAY_W, DISPLAY_H = 1280, 720
-WINDOW_NAME = "AirInk v2"
+WINDOW_NAME = "AirInk"
 
 # Brush config
 COLORS = [
@@ -256,18 +253,18 @@ while True:
         # index only → draw
         if fu[1] and not fu[2] and not fu[3] and not fu[4]:
             drawing = True
-            status  = "✏ Drawing"
+            status  = "Drawing"
             tip_pt  = smooth_point(raw_tip)   # smoothing
 
         # index + middle → move (no drawing)
         elif fu[1] and fu[2] and not fu[3] and not fu[4]:
-            status  = "✋ Moving"
+            status  = "Moving"
             tip_pt  = smooth_point(raw_tip)
             prev_point = None
 
         # index + middle + ring → switch color
         elif fu[1] and fu[2] and fu[3] and not fu[4]:
-            status = "🎨 Switch color"
+            status = "Switch color"
             if now - last_color_gesture_time > COLOR_GESTURE_COOLDOWN:
                 color_idx = (color_idx + 1) % len(COLORS)
                 eraser_mode = False
@@ -277,7 +274,7 @@ while True:
 
         # index + pinky (others bent) → increase brush
         elif fu[1] and not fu[2] and not fu[3] and fu[4]:
-            status = "➕ Increase brush"
+            status = "Increase brush"
             if now - last_color_gesture_time > 0.4:
                 BRUSH_THICK = min(BRUSH_THICK + 2, 40)
                 last_color_gesture_time = now
@@ -285,7 +282,7 @@ while True:
 
         # index + ring (others bent) → decrease brush
         elif fu[1] and not fu[2] and fu[3] and not fu[4]:
-            status = "➖ Decrease brush"
+            status = "Decrease brush"
             if now - last_color_gesture_time > 0.4:
                 BRUSH_THICK = max(BRUSH_THICK - 2, 1)
                 last_color_gesture_time = now
@@ -293,7 +290,7 @@ while True:
 
         # all five fingers open → clear canvas
         elif n >= 5:
-            status = "🖐 Clear"
+            status = "Clear"
             if now - last_color_gesture_time > 1.0:
                 undo_stack.extend([canvas.copy()])  # push snapshot before clearing
                 canvas[:] = 0
