@@ -1,6 +1,5 @@
 """
 AirInk v2 — Incorporating open-source best practices
-=====================================================
 References:
   ★ KrShahil/Air-Drawing-System  → multi-finger gesture control for color/thickness/clear
   ★ SakshamShandilya/AirSketch   → adaptive smoothing + distance sampling de-jitter + alpha blending
@@ -29,11 +28,11 @@ import mediapipe as mp
 import time
 from collections import deque
 
-# ─── Display config ────────────────────────────────────
+# Display config
 DISPLAY_W, DISPLAY_H = 1280, 720
 WINDOW_NAME = "AirInk v2"
 
-# ─── Brush config ─────────────────────────────────────
+# Brush config
 COLORS = [
     ("Red",    (0,   0,   255)),
     ("Green",  (0,   200,  80)),
@@ -46,25 +45,25 @@ color_idx   = 0
 BRUSH_THICK = 6
 ERASE_THICK = 30
 
-# ─── Smoothing config (from AirSketch) ─────────────────
+# Smoothing config
 SMOOTH_WINDOW = 5       # fingertip coordinate moving average window
 MIN_DRAW_DIST = 3       # distance filter: skip drawing if finger moves less than this (de-jitter)
 point_history = deque(maxlen=SMOOTH_WINDOW)
 
-# ─── Undo stack (from IrfanKpm/OpenCv_Paint) ───────────
+# Undo stack
 MAX_UNDO = 20
 undo_stack: list[np.ndarray] = []
 
-# ─── Pinch detection (from IrfanKpm) ───────────────────
+# Pinch detection
 PINCH_DIST_THRESH  = 35   # pixel distance threshold for pinch
 PINCH_COOLDOWN     = 0.8  # seconds: prevent repeated triggers
 last_pinch_time    = 0.0
 
-# ─── Color switch gesture cooldown ─────────────────────
+# Color switch gesture cooldown
 COLOR_GESTURE_COOLDOWN = 1.2
 last_color_gesture_time = 0.0
 
-# ─── MediaPipe initialization ──────────────────────────
+# MediaPipe initialization
 mp_hands   = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 mp_styles  = mp.solutions.drawing_styles
@@ -77,7 +76,7 @@ hands_detector = mp_hands.Hands(
     model_complexity=0,   # 0=lite, better performance (AirSketch recommendation)
 )
 
-# ─── HandDetector wrapper (based on ryanw-2's design) ──
+# andDetector wrapper
 class HandDetector:
     """Wraps MediaPipe hand detection, provides reusable interface"""
 
@@ -124,7 +123,7 @@ class HandDetector:
         return self.lm
 
 
-# ─── Camera initialization ─────────────────────────────
+# Camera initialization
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise RuntimeError("Cannot open camera")
@@ -141,7 +140,7 @@ cv2.resizeWindow(WINDOW_NAME, DISPLAY_W, DISPLAY_H)
 prev_point  = None
 eraser_mode = False
 
-# ─── Helper functions ──────────────────────────────────
+# Helper functions
 def smooth_point(new_pt: tuple[int, int]) -> tuple[int, int]:
     """Moving average smoothing to reduce hand shake (from AirSketch)"""
     point_history.append(new_pt)
@@ -212,7 +211,7 @@ def draw_ui(img: np.ndarray, hand: HandDetector, status: str, tip_pt):
     cv2.putText(img, hint, (10, h - 8),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (160, 160, 160), 1)
 
-# ─── Main loop ─────────────────────────────────────────
+# Main loop
 print("=" * 55)
 print("  AirInk v2 — Incorporating open-source best practices")
 print("=" * 55)
@@ -253,7 +252,7 @@ while True:
         n  = sum(fu)
         raw_tip = hand.tip(8, DISPLAY_W, DISPLAY_H)   # index fingertip
 
-        # ── Gesture recognition (from KrShahil/Air-Drawing-System) ──
+        # Gesture recognition
         # index only → draw
         if fu[1] and not fu[2] and not fu[3] and not fu[4]:
             drawing = True
@@ -306,7 +305,7 @@ while True:
             status = f"({n} fingers)"
             prev_point = None
 
-        # ── Pinch detection = undo (from IrfanKpm) ──────
+        # Pinch detection = undo
         pinch = hand.pinch_distance(DISPLAY_W, DISPLAY_H)
         if pinch < PINCH_DIST_THRESH and now - last_pinch_time > PINCH_COOLDOWN:
             if undo_stack:
@@ -315,11 +314,11 @@ while True:
             last_pinch_time = now
             prev_point = None
 
-    # ── Drawing logic ───────────────────────────────────
+    # Drawing logic
     if drawing and tip_pt:
         if prev_point:
             dist = np.linalg.norm(np.array(tip_pt) - np.array(prev_point))
-            if dist > MIN_DRAW_DIST:   # distance filter de-jitter (AirSketch technique)
+            if dist > MIN_DRAW_DIST:   # distance filter de-jitter
                 # save undo snapshot (before each stroke)
                 if dist > 30 and len(undo_stack) < MAX_UNDO:
                     undo_stack = push_undo(canvas)
@@ -332,15 +331,15 @@ while True:
         if not drawing:
             prev_point = None
 
-    # ── Alpha blending (AirSketch technique) ────────────
+    # Alpha blending 
     combined = alpha_blend(frame, canvas, alpha=0.92)
 
-    # ── UI drawing ─────────────────────────────────────
+    # UI drawing
     draw_ui(combined, hand, status, tip_pt)
 
     cv2.imshow(WINDOW_NAME, combined)
 
-    # ── Keyboard input ─────────────────────────────────
+    # Keyboard input
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
         break
@@ -367,7 +366,7 @@ while True:
             color_idx = idx
             eraser_mode = False
 
-# ─── Cleanup ───────────────────────────────────────────
+# Cleanup
 hands_detector.close()
 cap.release()
 cv2.destroyAllWindows()
